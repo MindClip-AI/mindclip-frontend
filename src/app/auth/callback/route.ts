@@ -3,24 +3,24 @@ import type { NextRequest } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
 export async function GET(req: NextRequest) {
+  const url = new URL(req.url)
+  const code = url.searchParams.get('code')
+  const next = url.searchParams.get('next') || '/workspace'
+
+  if (!code) {
+    return NextResponse.redirect(new URL('/login', req.url))
+  }
+
   try {
-    const supabase = createServerSupabaseClient()
-    // Attempt to exchange the OAuth code for a session
-    // supabase-js exposes exchangeCodeForSession on the server auth helper
-    // If successful, the helper will set the auth cookies via the provided cookie store
-    // @ts-ignore
-    const { data, error } = await supabase.auth.exchangeCodeForSession(req.url)
+    const supabase = await createServerSupabaseClient()
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (error) {
-      const redirectUrl = new URL('/login', req.url)
-      redirectUrl.searchParams.set('error', error.message)
-      return NextResponse.redirect(redirectUrl)
+      return NextResponse.redirect(new URL('/login', req.url))
     }
 
-    // On success, redirect to workspace
-    return NextResponse.redirect(new URL('/workspace', req.url))
-  } catch (err) {
-    const redirectUrl = new URL('/login', req.url)
-    return NextResponse.redirect(redirectUrl)
+    return NextResponse.redirect(new URL(next.startsWith('/') ? next : '/workspace', req.url))
+  } catch {
+    return NextResponse.redirect(new URL('/login', req.url))
   }
 }
