@@ -1,10 +1,68 @@
-'use client'
+﻿'use client'
 
 import { PlayCircle } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 
-export default function StudyRoomPage({ params }: { params: { id: string } }) {
+export default function StudyRoomPage() {
+  const params = useParams()
+  const id = params.id as string
   const [activeTab, setActiveTab] = useState<'chapters' | 'chat' | 'quizzes'>('chapters')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [content, setContent] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    if (!id) return
+
+    const supabase = createClient()
+    let isMounted = true
+
+    const fetchContent = async () => {
+      setIsLoading(true)
+      const { data, error } = await supabase
+        .from('contents')
+        .select('*')
+        .eq('id', id)
+        .single()
+
+      if (!error && data && isMounted) {
+        setContent(data)
+      }
+      if (isMounted) setIsLoading(false)
+    }
+
+    fetchContent()
+
+    // Suscripción a cambios de actualización en tiempo real
+    const channel = supabase
+      .channel(`content-changes-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'contents',
+          filter: `id=eq.${id}`,
+        },
+        (payload) => {
+          if (isMounted && payload.new) {
+            setContent(payload.new)
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      isMounted = false
+      supabase.removeChannel(channel)
+    }
+  }, [id])
+
+  if (isLoading) return <div className="flex h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div></div>
+
+  if (content?.status === 'processing') return <div className="flex h-[calc(100vh-8rem)] flex-col items-center justify-center text-center px-4"><div className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent mb-4"></div><h2 className="text-2xl font-bold text-slate-900">La IA está analizando tu contenido</h2><p className="text-slate-500 mt-2 max-w-md">Estamos generando la transcripción, los capítulos y preparando a tu tutor personalizado. Esto tomará un momento.</p></div>
 
   return (
     <section className="flex min-h-[calc(100vh-8rem)] flex-col gap-4 lg:grid lg:grid-cols-[65fr_35fr] lg:gap-0">
@@ -17,7 +75,7 @@ export default function StudyRoomPage({ params }: { params: { id: string } }) {
         </div>
 
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Cómo dominar MindClip AI en tu estudio diario</h1>
+          <h1 className="text-xl font-bold text-slate-900">{content?.title || 'Contenido sin título'}</h1>
           <p className="mt-1 text-sm text-slate-500">
             Resumen del contenido: aprende a estructurar tus sesiones, capturar ideas clave y convertirlas en resultados accionables.
           </p>
