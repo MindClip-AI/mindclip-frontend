@@ -4,14 +4,17 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Upload } from 'lucide-react'
 import { useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 export default function WorkspaceDashboardPage() {
   const router = useRouter()
   const [activeInput, setActiveInput] = useState<'youtube' | 'audio'>('youtube')
   const [youtubeUrl, setYoutubeUrl] = useState('')
   const [error, setError] = useState('')
+  const supabase = createClient()
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
 
-  const handleAnalyze = (e: React.FormEvent) => {
+  const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault()
 
     const cleanUrl = youtubeUrl.trim()
@@ -22,8 +25,35 @@ export default function WorkspaceDashboardPage() {
       return
     }
 
-    setError('')
-    router.push('/workspace/demo-123')
+    try {
+      setIsAnalyzing(true)
+      setError('')
+
+      const { data: userData } = await supabase.auth.getUser()
+      const user = userData?.user
+      if (!user) throw new Error('No authenticated user')
+
+      const { data, error: insertError } = await supabase
+        .from('contents')
+        .insert({
+          user_id: user.id,
+          title: 'Video en proceso...',
+          source_type: 'youtube',
+          source_url: cleanUrl,
+          status: 'processing',
+        })
+        .select('id')
+        .single()
+
+      if (insertError) throw insertError
+
+      await router.refresh()
+      router.push('/workspace/' + data.id)
+    } catch (err) {
+      setError('Hubo un problema al guardar el video. Intenta de nuevo.')
+    } finally {
+      setIsAnalyzing(false)
+    }
   }
 
   const previousSessions = [
@@ -75,8 +105,8 @@ export default function WorkspaceDashboardPage() {
               placeholder="https://www.youtube.com/watch?v=..."
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
-            <button type="submit" className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-              Analizar -&gt;
+                        <button type="submit" disabled={isAnalyzing} className={`rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 ${isAnalyzing ? 'opacity-70 cursor-not-allowed' : ''}`}>
+              {isAnalyzing ? 'Procesando...' : 'Analizar ->'}
             </button>
           </form>
         ) : (
@@ -114,3 +144,6 @@ export default function WorkspaceDashboardPage() {
     </section>
   )
 }
+
+
+
