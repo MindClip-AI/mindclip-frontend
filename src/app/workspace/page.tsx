@@ -1,97 +1,100 @@
 'use client'
 
-import { PlayCircle } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { Upload } from 'lucide-react'
 import { useState } from 'react'
 
-export default function WorkspacePage() {
-  const [activeTab, setActiveTab] = useState<'chapters' | 'chat' | 'quizzes'>('chapters')
+export default function WorkspaceDashboardPage() {
+  const router = useRouter()
+  const [activeInput, setActiveInput] = useState<'youtube' | 'audio'>('youtube')
+  const [youtubeUrl, setYoutubeUrl] = useState('')
+
+  const handleYoutubeSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    router.push('/workspace/demo-123')
+  }
+
+  const previousSessions = [
+    { id: 'demo-123', title: 'Neurociencia del aprendizaje acelerado', timeAgo: 'Hace 2 horas' },
+    { id: 'demo-234', title: 'Introducción a Machine Learning', timeAgo: 'Hace 5 horas' },
+    { id: 'demo-345', title: 'Historia económica moderna', timeAgo: 'Hace 1 día' },
+    { id: 'demo-456', title: 'Fundamentos de React y estado', timeAgo: 'Hace 2 días' },
+    { id: 'demo-567', title: 'Técnicas de memorización activa', timeAgo: 'Hace 3 días' },
+    { id: 'demo-678', title: 'Programación orientada a objetos', timeAgo: 'Hace 1 semana' },
+  ]
 
   return (
-    <section className="flex min-h-[calc(100vh-8rem)] flex-col gap-4 lg:grid lg:grid-cols-[65fr_35fr] lg:gap-0">
-      <div className="space-y-4 lg:pr-4">
-        <div className="relative aspect-video rounded-xl bg-black shadow-lg">
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center">
-            <PlayCircle className="h-16 w-16 text-white/80" />
-            <p className="text-sm text-white/80">Reproductor de Video</p>
-          </div>
+    <section className="mx-auto w-full max-w-6xl py-8">
+      <header className="text-center">
+        <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600">NUEVA SESIÓN</p>
+        <h1 className="mt-1 text-3xl font-bold text-slate-900">¿Qué vas a estudiar hoy?</h1>
+        <p className="mx-auto mt-2 max-w-lg text-sm text-slate-500">
+          Pega un enlace de YouTube o sube un archivo de audio generaremos capítulos, un quiz y un tutor de IA con contexto en segundos.
+        </p>
+      </header>
+
+      <div className="mx-auto mt-8 max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex gap-6 border-b border-slate-200 text-sm">
+          <button
+            type="button"
+            onClick={() => setActiveInput('youtube')}
+            className={`pb-3 ${activeInput === 'youtube' ? 'border-b-2 border-indigo-600 text-indigo-600 font-medium' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            Enlace de YouTube
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveInput('audio')}
+            className={`pb-3 ${activeInput === 'audio' ? 'border-b-2 border-indigo-600 text-indigo-600 font-medium' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            Subir Archivo de Audio
+          </button>
         </div>
 
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Cómo dominar MindClip AI en tu estudio diario</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Resumen del contenido: aprende a estructurar tus sesiones, capturar ideas clave y convertirlas en resultados accionables.
-          </p>
-        </div>
+        {activeInput === 'youtube' ? (
+          <form onSubmit={handleYoutubeSubmit} className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <input
+              type="url"
+              value={youtubeUrl}
+              onChange={(e) => setYoutubeUrl(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=..."
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <button type="submit" className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+              Analizar -&gt;
+            </button>
+          </form>
+        ) : (
+          <div className="mt-5 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50/50 p-8 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
+              <Upload className="h-6 w-6 text-slate-500" />
+            </div>
+            <p className="font-semibold text-slate-700">Suelta tu archivo de audio aquí</p>
+            <p className="mt-1 text-xs text-slate-400">MP3 - WAV - M4A - hasta 500 MB</p>
+            <button type="button" className="mt-4 rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">
+              Explorar archivos
+            </button>
+          </div>
+        )}
       </div>
 
-      <aside className="rounded-xl border border-slate-200 bg-white lg:rounded-l-none lg:border-l lg:border-y-0 lg:border-r-0">
-        <div className="border-b border-slate-200 px-4 pt-3">
-          <div className="flex gap-5 text-sm">
-            <button
-              type="button"
-              onClick={() => setActiveTab('chapters')}
-              className={`pb-3 ${activeTab === 'chapters' ? 'border-b-2 border-indigo-600 text-indigo-600 font-medium' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              Capítulos
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('chat')}
-              className={`pb-3 ${activeTab === 'chat' ? 'border-b-2 border-indigo-600 text-indigo-600 font-medium' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              Tutor IA
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('quizzes')}
-              className={`pb-3 ${activeTab === 'quizzes' ? 'border-b-2 border-indigo-600 text-indigo-600 font-medium' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              Quizzes
-            </button>
-          </div>
+      <section className="mt-10">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-slate-500">SESIONES ANTERIORES</h2>
+          <span className="text-sm text-slate-400">6 elementos</span>
         </div>
 
-        <div className="flex min-h-[320px] flex-col p-4">
-          {activeTab === 'chapters' ? (
-            <div className="space-y-3 text-sm text-slate-700">
-              <p className="font-medium text-slate-900">Marcas de tiempo</p>
-              <ul className="space-y-2">
-                <li className="rounded-md bg-slate-50 px-3 py-2">00:00 - Introducción</li>
-                <li className="rounded-md bg-slate-50 px-3 py-2">03:24 - Conceptos clave</li>
-                <li className="rounded-md bg-slate-50 px-3 py-2">08:41 - Ejemplo práctico</li>
-                <li className="rounded-md bg-slate-50 px-3 py-2">12:15 - Resumen final</li>
-              </ul>
-            </div>
-          ) : null}
-
-          {activeTab === 'chat' ? (
-            <div className="flex h-full flex-col">
-              <div className="flex-1 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
-                Historial del chat con el Tutor IA
-              </div>
-              <div className="mt-3">
-                <input
-                  type="text"
-                  placeholder="Escribe tu pregunta..."
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-            </div>
-          ) : null}
-
-          {activeTab === 'quizzes' ? (
-            <div className="space-y-3 text-sm text-slate-700">
-              <p className="font-medium text-slate-900">Pregunta de opción múltiple</p>
-              <div className="rounded-md border border-slate-200 p-3">¿Qué sección resume los puntos más importantes del video?</div>
-              <ul className="space-y-2">
-                <li className="rounded-md bg-slate-50 px-3 py-2">A) Introducción</li>
-                <li className="rounded-md bg-slate-50 px-3 py-2">B) Conceptos clave</li>
-                <li className="rounded-md bg-slate-50 px-3 py-2">C) Resumen final</li>
-              </ul>
-            </div>
-          ) : null}
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {previousSessions.map((session) => (
+            <Link key={session.id} href="/workspace/demo-123" className="rounded-xl border border-slate-200 bg-white p-4 transition hover:shadow-sm">
+              <div className="mb-3 flex aspect-video items-center justify-center rounded-lg bg-slate-100 text-slate-400">Miniatura</div>
+              <p className="text-sm font-semibold text-slate-900">{session.title}</p>
+              <p className="mt-1 text-xs text-slate-500">{session.timeAgo}</p>
+            </Link>
+          ))}
         </div>
-      </aside>
+      </section>
     </section>
   )
 }
