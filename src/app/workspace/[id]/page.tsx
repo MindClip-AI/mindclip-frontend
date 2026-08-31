@@ -14,22 +14,50 @@ export default function StudyRoomPage() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    if (!id) return
+
+    const supabase = createClient()
+    let isMounted = true
+
     const fetchContent = async () => {
-      if (!id) return
       setIsLoading(true)
-      const supabase = createClient()
       const { data, error } = await supabase
         .from('contents')
         .select('*')
         .eq('id', id)
         .single()
 
-      if (!error && data) {
+      if (!error && data && isMounted) {
         setContent(data)
       }
-      setIsLoading(false)
+      if (isMounted) setIsLoading(false)
     }
+
     fetchContent()
+
+    // Suscripción a cambios de actualización en tiempo real
+    const channel = supabase
+      .channel(`content-changes-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'contents',
+          filter: `id=eq.${id}`,
+        },
+        (payload) => {
+          if (isMounted && payload.new) {
+            setContent(payload.new)
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      isMounted = false
+      supabase.removeChannel(channel)
+    }
   }, [id])
 
   if (isLoading) return <div className="flex h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div></div>
