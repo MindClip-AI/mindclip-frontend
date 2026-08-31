@@ -9,9 +9,20 @@ export default function WorkspaceDashboardPage() {
   const router = useRouter()
   const [activeInput, setActiveInput] = useState<'youtube' | 'audio'>('youtube')
   const [youtubeUrl, setYoutubeUrl] = useState('')
+  const [error, setError] = useState('')
 
-  const handleYoutubeSubmit = (e: React.FormEvent) => {
+  const handleAnalyze = (e: React.FormEvent) => {
     e.preventDefault()
+
+    const cleanUrl = youtubeUrl.trim()
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/
+
+    if (!cleanUrl || !youtubeRegex.test(cleanUrl)) {
+      setError('Por favor, ingresa un enlace válido de YouTube.')
+      return
+    }
+
+    setError('')
     router.push('/workspace/demo-123')
   }
 
@@ -53,11 +64,14 @@ export default function WorkspaceDashboardPage() {
         </div>
 
         {activeInput === 'youtube' ? (
-          <form onSubmit={handleYoutubeSubmit} className="mt-5 flex flex-col gap-3 sm:flex-row">
+          <form onSubmit={handleAnalyze} noValidate className="mt-5 flex flex-col gap-3 sm:flex-row">
             <input
               type="url"
               value={youtubeUrl}
-              onChange={(e) => setYoutubeUrl(e.target.value)}
+              onChange={(e) => {
+                setYoutubeUrl(e.target.value)
+                if (error) setError('')
+              }}
               placeholder="https://www.youtube.com/watch?v=..."
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
@@ -77,6 +91,8 @@ export default function WorkspaceDashboardPage() {
             </button>
           </div>
         )}
+
+        {error && <p className="text-sm text-red-500 mt-2 font-medium">{error}</p>}
       </div>
 
       <section className="mt-10">
